@@ -1,0 +1,103 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>طلب خاص - الخدمات الجامعية</title>
+    <link rel="stylesheet" href="styles.css">
+</head>
+<body>
+    <header class="header">
+        <nav class="nav">
+            <div class="logo">🎓 الخدمات الجامعية</div>
+            <ul class="nav-links">
+                <li><a href="index.html">الرئيسية</a></li>
+                <li><a href="my-orders.html">طلباتي</a></li>
+                <li><a href="admin-panel.html">لوحة التحكم</a></li>
+            </ul>
+        </nav>
+    </header>
+
+    <main class="container">
+        <div class="form-container fade-in">
+            <h2>✨ طلب خاص</h2>
+            <p class="text-secondary mb-lg">لديك طلب مختلف أو خاص؟ اكتب لنا ما تحتاجه وسنساعدك</p>
+
+            <form id="customForm">
+                <div class="form-group">
+                    <label for="customerName">الاسم الكامل *</label>
+                    <input type="text" id="customerName" name="customerName" required>
+                </div>
+
+                <div class="form-group">
+                    <label for="customerEmail">البريد الإلكتروني *</label>
+                    <input type="email" id="customerEmail" name="customerEmail" required>
+                </div>
+
+                <div class="form-group">
+                    <label for="requestDescription">وصف الطلب بالتفصيل *</label>
+                    <textarea id="requestDescription" name="requestDescription" 
+                              placeholder="اشرح بالتفصيل ما تحتاجه... يمكنك ذكر:&#10;- نوع الخدمة المطلوبة&#10;- التفاصيل والمواصفات&#10;- أي متطلبات خاصة&#10;- أمثلة إن وجدت"
+                              style="min-height: 200px;" required></textarea>
+                </div>
+
+                <div class="form-group">
+                    <label for="deadline">الموعد النهائي *</label>
+                    <input type="date" id="deadline" name="deadline" required>
+                </div>
+
+                <div class="form-group">
+                    <label for="specificRequirements">متطلبات محددة</label>
+                    <textarea id="specificRequirements" name="specificRequirements" 
+                              placeholder="أي متطلبات أو ملاحظات إضافية..."></textarea>
+                </div>
+
+                <div class="form-actions">
+                    <a href="index.html" class="btn btn-secondary">إلغاء</a>
+                    <button type="submit" class="btn btn-primary">إرسال الطلب</button>
+                </div>
+            </form>
+        </div>
+    </main>
+
+    <script src="app.js"></script>
+    <script>
+        document.getElementById('customForm').addEventListener('submit', async (e) => {
+            e.preventDefault();
+            
+            const formData = {
+                service_type: 'custom',
+                customer_name: document.getElementById('customerName').value,
+                customer_email: document.getElementById('customerEmail').value,
+                details: {
+                    requestDescription: document.getElementById('requestDescription').value,
+                    deadline: document.getElementById('deadline').value,
+                    specificRequirements: document.getElementById('specificRequirements').value
+                }
+            };
+
+            try {
+                const response = await fetch(API_BASE + '/api/orders', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify(formData)
+                });
+
+                const result = await response.json();
+                
+                if (result.success) {
+                    alert('✅ تم إرسال طلبك بنجاح! سنراجعه ونبدأ العمل عليه فوراً');
+                    window.location.href = 'my-orders.html?email=' + formData.customer_email;
+                } else {
+                    alert('❌ حدث خطأ: ' + result.error);
+                }
+            } catch (error) {
+                console.error('Error:', error);
+                alert('❌ حدث خطأ في الاتصال بالخادم');
+            }
+        });
+
+        document.getElementById('deadline').min = new Date().toISOString().split('T')[0];
+    </script>
+</body>
+</html>

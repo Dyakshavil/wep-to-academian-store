@@ -1,0 +1,143 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>طلب تطوير برمجيات - الخدمات الجامعية</title>
+    <link rel="stylesheet" href="styles.css">
+</head>
+<body>
+    <header class="header">
+        <nav class="nav">
+            <div class="logo">🎓 الخدمات الجامعية</div>
+            <ul class="nav-links">
+                <li><a href="index.html">الرئيسية</a></li>
+                <li><a href="my-orders.html">طلباتي</a></li>
+                <li><a href="admin-panel.html">لوحة التحكم</a></li>
+            </ul>
+        </nav>
+    </header>
+
+    <main class="container">
+        <div class="form-container fade-in">
+            <h2>🖥️ طلب تطوير برمجيات</h2>
+            <p class="text-secondary mb-lg">نطور لك تطبيقات احترافية لجميع المنصات</p>
+
+            <form id="softwareForm">
+                <div class="form-group">
+                    <label for="customerName">الاسم الكامل *</label>
+                    <input type="text" id="customerName" name="customerName" required>
+                </div>
+
+                <div class="form-group">
+                    <label for="customerEmail">البريد الإلكتروني *</label>
+                    <input type="email" id="customerEmail" name="customerEmail" required>
+                </div>
+
+                <div class="form-group">
+                    <label for="softwareType">نوع البرنامج *</label>
+                    <select id="softwareType" name="softwareType" required>
+                        <option value="">اختر النوع</option>
+                        <option value="تطبيق سطح المكتب">تطبيق سطح المكتب (Desktop Application)</option>
+                        <option value="تطبيق ويب">تطبيق ويب (Web Application)</option>
+                        <option value="تطبيق موبايل">تطبيق موبايل (Mobile App)</option>
+                        <option value="قاعدة بيانات">قاعدة بيانات (Database System)</option>
+                        <option value="نظام إدارة">نظام إدارة (Management System)</option>
+                        <option value="أخرى">أخرى</option>
+                    </select>
+                </div>
+
+                <div class="form-group">
+                    <label for="platform">المنصة / التقنية *</label>
+                    <select id="platform" name="platform" required>
+                        <option value="">اختر المنصة</option>
+                        <option value="Windows">Windows</option>
+                        <option value="macOS">macOS</option>
+                        <option value="Linux">Linux</option>
+                        <option value="Web (HTML/CSS/JS)">Web (HTML/CSS/JS)</option>
+                        <option value="React">React</option>
+                        <option value="Angular">Angular</option>
+                        <option value="Vue.js">Vue.js</option>
+                        <option value="Android">Android</option>
+                        <option value="iOS">iOS</option>
+                        <option value="Flutter">Flutter</option>
+                        <option value="React Native">React Native</option>
+                        <option value="MySQL">MySQL</option>
+                        <option value="PostgreSQL">PostgreSQL</option>
+                        <option value="MongoDB">MongoDB</option>
+                        <option value="أخرى">أخرى</option>
+                    </select>
+                </div>
+
+                <div class="form-group">
+                    <label for="description">وصف المشروع *</label>
+                    <textarea id="description" name="description" placeholder="اشرح بالتفصيل ما تريد أن يفعله البرنامج..." required></textarea>
+                </div>
+
+                <div class="form-group">
+                    <label for="features">المميزات والوظائف المطلوبة *</label>
+                    <textarea id="features" name="features" placeholder="اذكر جميع المميزات والوظائف التي تريدها..." required></textarea>
+                </div>
+
+                <div class="form-group">
+                    <label for="deadline">الموعد النهائي *</label>
+                    <input type="date" id="deadline" name="deadline" required>
+                </div>
+
+                <div class="form-group">
+                    <label for="specifications">مواصفات إضافية</label>
+                    <textarea id="specifications" name="specifications" placeholder="أي مواصفات تقنية أو متطلبات خاصة..."></textarea>
+                </div>
+
+                <div class="form-actions">
+                    <a href="index.html" class="btn btn-secondary">إلغاء</a>
+                    <button type="submit" class="btn btn-primary">إرسال الطلب</button>
+                </div>
+            </form>
+        </div>
+    </main>
+
+    <script src="app.js"></script>
+    <script>
+        document.getElementById('softwareForm').addEventListener('submit', async (e) => {
+            e.preventDefault();
+            
+            const formData = {
+                service_type: 'software',
+                customer_name: document.getElementById('customerName').value,
+                customer_email: document.getElementById('customerEmail').value,
+                details: {
+                    softwareType: document.getElementById('softwareType').value,
+                    platform: document.getElementById('platform').value,
+                    description: document.getElementById('description').value,
+                    features: document.getElementById('features').value,
+                    deadline: document.getElementById('deadline').value,
+                    specifications: document.getElementById('specifications').value
+                }
+            };
+
+            try {
+                const response = await fetch(API_BASE + '/api/orders', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify(formData)
+                });
+
+                const result = await response.json();
+                
+                if (result.success) {
+                    alert('✅ تم إرسال طلبك بنجاح! سنبدأ العمل عليه فوراً');
+                    window.location.href = 'my-orders.html?email=' + formData.customer_email;
+                } else {
+                    alert('❌ حدث خطأ: ' + result.error);
+                }
+            } catch (error) {
+                console.error('Error:', error);
+                alert('❌ حدث خطأ في الاتصال بالخادم');
+            }
+        });
+
+        document.getElementById('deadline').min = new Date().toISOString().split('T')[0];
+    </script>
+</body>
+</html>

@@ -1,0 +1,174 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>طلباتي - الخدمات الجامعية</title>
+    <link rel="stylesheet" href="styles.css">
+</head>
+<body>
+    <header class="header">
+        <nav class="nav">
+            <div class="logo">🎓 الخدمات الجامعية</div>
+            <ul class="nav-links">
+                <li><a href="index.html">الرئيسية</a></li>
+                <li><a href="my-orders.html">طلباتي</a></li>
+                <li><a href="admin-panel.html">لوحة التحكم</a></li>
+            </ul>
+        </nav>
+    </header>
+
+    <main class="container">
+        <div class="fade-in">
+            <h2 class="text-center">📦 طلباتي</h2>
+            <p class="text-center text-secondary mb-lg">تابع حالة جميع طلباتك من هنا</p>
+
+            <!-- Email Input -->
+            <div class="form-container" style="max-width: 500px;">
+                <div class="form-group">
+                    <label for="emailInput">أدخل بريدك الإلكتروني لعرض طلباتك</label>
+                    <input type="email" id="emailInput" placeholder="example@email.com">
+                </div>
+                <button onclick="loadOrders()" class="btn btn-primary" style="width: 100%;">عرض الطلبات</button>
+            </div>
+
+            <!-- Orders Display -->
+            <div id="ordersContainer" class="mt-lg"></div>
+        </div>
+    </main>
+
+    <script src="app.js"></script>
+    <script>
+        const serviceNames = {
+            'research': '📚 بحث علمي',
+            'presentation': '📊 عرض تقديمي',
+            'programming': '💻 مشروع برمجي',
+            'software': '🖥️ تطوير برمجيات',
+            'custom': '✨ طلب خاص'
+        };
+
+        const statusNames = {
+            'pending': 'جديد - قيد المراجعة',
+            'in_progress': 'جاري العمل عليه',
+            'completed': 'مكتمل'
+        };
+
+        // Check URL for email parameter
+        const urlParams = new URLSearchParams(window.location.search);
+        const emailFromUrl = urlParams.get('email');
+        if (emailFromUrl) {
+            document.getElementById('emailInput').value = emailFromUrl;
+            loadOrders();
+        }
+
+        async function loadOrders() {
+            const email = document.getElementById('emailInput').value.trim();
+            
+            if (!email) {
+                alert('⚠️ من فضلك أدخل بريدك الإلكتروني');
+                return;
+            }
+
+            const container = document.getElementById('ordersContainer');
+            container.innerHTML = '<div class="spinner"></div>';
+
+            try {
+                const response = await fetch(API_BASE + `/api/orders/customer/${encodeURIComponent(email)}`);
+                const result = await response.json();
+
+                if (result.success) {
+                    displayOrders(result.orders);
+                } else {
+                    container.innerHTML = `<p class="text-center text-secondary">❌ ${result.error}</p>`;
+                }
+            } catch (error) {
+                console.error('Error:', error);
+                container.innerHTML = '<p class="text-center text-secondary">❌ حدث خطأ في تحميل الطلبات</p>';
+            }
+        }
+
+        function displayOrders(orders) {
+            const container = document.getElementById('ordersContainer');
+
+            if (orders.length === 0) {
+                container.innerHTML = '<p class="text-center text-secondary">لا توجد طلبات حتى الآن</p>';
+                return;
+            }
+
+            let html = '<div class="orders-grid">';
+            
+            orders.forEach(order => {
+                const serviceName = serviceNames[order.service_type] || order.service_type;
+                const statusName = statusNames[order.status] || order.status;
+                const createdDate = new Date(order.created_at).toLocaleDateString('ar-EG');
+                
+                html += `
+                    <div class="order-card fade-in">
+                        <div class="order-header">
+                            <div>
+                                <h3>${serviceName}</h3>
+                                <span class="order-id">رقم الطلب: #${order.id}</span>
+                            </div>
+                            <span class="status-badge status-${order.status}">${statusName}</span>
+                        </div>
+                        <div class="order-details">
+                            <p><strong>تاريخ الطلب:</strong> ${createdDate}</p>
+                            ${order.delivery_date ? `<p><strong>📅 موعد التسليم:</strong> ${new Date(order.delivery_date).toLocaleDateString('ar-EG')}</p>` : ''}
+                            ${getOrderDetailsHTML(order)}
+                        </div>
+                    </div>
+                `;
+            });
+
+            html += '</div>';
+            container.innerHTML = html;
+        }
+
+        function getOrderDetailsHTML(order) {
+            const details = order.details;
+            let html = '<div style="margin-top: 1rem; padding-top: 1rem; border-top: 1px solid var(--bg-card);">';
+
+            switch(order.service_type) {
+                case 'research':
+                    html += `
+                        <p><strong>العنوان:</strong> ${details.title}</p>
+                        <p><strong>الموضوع:</strong> ${details.subject}</p>
+                        <p><strong>عدد الصفحات:</strong> ${details.pages}</p>
+                        <p><strong>نوع التوثيق:</strong> ${details.citationStyle}</p>
+                    `;
+                    break;
+                case 'presentation':
+                    html += `
+                        <p><strong>العنوان:</strong> ${details.title}</p>
+                        <p><strong>الموضوع:</strong> ${details.topic}</p>
+                        <p><strong>عدد الشرائح:</strong> ${details.slides}</p>
+                        <p><strong>النمط:</strong> ${details.style}</p>
+                    `;
+                    break;
+                case 'programming':
+                    html += `
+                        <p><strong>لغة البرمجة:</strong> ${details.language}</p>
+                        <p><strong>نوع المشروع:</strong> ${details.projectType}</p>
+                        <p><strong>الوصف:</strong> ${details.description.substring(0, 100)}...</p>
+                    `;
+                    break;
+                case 'software':
+                    html += `
+                        <p><strong>نوع البرنامج:</strong> ${details.softwareType}</p>
+                        <p><strong>المنصة:</strong> ${details.platform}</p>
+                        <p><strong>الوصف:</strong> ${details.description.substring(0, 100)}...</p>
+                    `;
+                    break;
+                case 'custom':
+                    html += `
+                        <p><strong>الوصف:</strong> ${details.requestDescription.substring(0, 150)}...</p>
+                    `;
+                    break;
+            }
+
+            html += '</div>';
+            return html;
+        }
+    </script>
+</body>
+</html>

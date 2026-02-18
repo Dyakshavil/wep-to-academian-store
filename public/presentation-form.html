@@ -1,0 +1,135 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>طلب عرض تقديمي - الخدمات الجامعية</title>
+    <link rel="stylesheet" href="styles.css">
+</head>
+<body>
+    <header class="header">
+        <nav class="nav">
+            <div class="logo">🎓 الخدمات الجامعية</div>
+            <ul class="nav-links">
+                <li><a href="index.html">الرئيسية</a></li>
+                <li><a href="my-orders.html">طلباتي</a></li>
+                <li><a href="admin-panel.html">لوحة التحكم</a></li>
+            </ul>
+        </nav>
+    </header>
+
+    <main class="container">
+        <div class="form-container fade-in">
+            <h2>📊 طلب عرض تقديمي (Presentation)</h2>
+            <p class="text-secondary mb-lg">املأ البيانات التالية وسنصمم لك عرضاً احترافياً</p>
+
+            <form id="presentationForm">
+                <div class="form-group">
+                    <label for="customerName">الاسم الكامل *</label>
+                    <input type="text" id="customerName" name="customerName" required>
+                </div>
+
+                <div class="form-group">
+                    <label for="customerEmail">البريد الإلكتروني *</label>
+                    <input type="email" id="customerEmail" name="customerEmail" required>
+                </div>
+
+                <div class="form-group">
+                    <label for="topic">الموضوع *</label>
+                    <input type="text" id="topic" name="topic" placeholder="موضوع العرض التقديمي" required>
+                </div>
+
+                <div class="form-group">
+                    <label for="title">العنوان *</label>
+                    <input type="text" id="title" name="title" placeholder="عنوان العرض" required>
+                </div>
+
+                <div class="form-group">
+                    <label for="style">نمط التصميم *</label>
+                    <select id="style" name="style" required>
+                        <option value="">اختر النمط</option>
+                        <option value="احترافي">احترافي (Professional)</option>
+                        <option value="إبداعي">إبداعي (Creative)</option>
+                        <option value="أكاديمي">أكاديمي (Academic)</option>
+                        <option value="بسيط">بسيط (Minimal)</option>
+                        <option value="عصري">عصري (Modern)</option>
+                    </select>
+                </div>
+
+                <div class="form-group">
+                    <label for="slides">عدد الشرائح *</label>
+                    <input type="number" id="slides" name="slides" min="5" max="100" placeholder="مثال: 20" required>
+                </div>
+
+                <div class="form-group">
+                    <label for="speakerNotes">ملاحظات المتحدث *</label>
+                    <select id="speakerNotes" name="speakerNotes" required>
+                        <option value="">اختر</option>
+                        <option value="نعم">نعم، أريد ملاحظات للمتحدث</option>
+                        <option value="لا">لا، الشرائح فقط</option>
+                    </select>
+                </div>
+
+                <div class="form-group">
+                    <label for="deadline">الموعد النهائي *</label>
+                    <input type="date" id="deadline" name="deadline" required>
+                </div>
+
+                <div class="form-group">
+                    <label for="requirements">متطلبات إضافية</label>
+                    <textarea id="requirements" name="requirements" placeholder="أي متطلبات خاصة بالتصميم أو المحتوى..."></textarea>
+                </div>
+
+                <div class="form-actions">
+                    <a href="index.html" class="btn btn-secondary">إلغاء</a>
+                    <button type="submit" class="btn btn-primary">إرسال الطلب</button>
+                </div>
+            </form>
+        </div>
+    </main>
+
+    <script src="app.js"></script>
+    <script>
+        document.getElementById('presentationForm').addEventListener('submit', async (e) => {
+            e.preventDefault();
+            
+            const formData = {
+                service_type: 'presentation',
+                customer_name: document.getElementById('customerName').value,
+                customer_email: document.getElementById('customerEmail').value,
+                details: {
+                    topic: document.getElementById('topic').value,
+                    title: document.getElementById('title').value,
+                    style: document.getElementById('style').value,
+                    slides: document.getElementById('slides').value,
+                    speakerNotes: document.getElementById('speakerNotes').value,
+                    deadline: document.getElementById('deadline').value,
+                    requirements: document.getElementById('requirements').value
+                }
+            };
+
+            try {
+                const response = await fetch(API_BASE + '/api/orders', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify(formData)
+                });
+
+                const result = await response.json();
+                
+                if (result.success) {
+                    alert('✅ تم إرسال طلبك بنجاح! سنبدأ العمل عليه فوراً');
+                    window.location.href = 'my-orders.html?email=' + formData.customer_email;
+                } else {
+                    alert('❌ حدث خطأ: ' + result.error);
+                }
+            } catch (error) {
+                console.error('Error:', error);
+                alert('❌ حدث خطأ في الاتصال بالخادم');
+            }
+        });
+
+        document.getElementById('deadline').min = new Date().toISOString().split('T')[0];
+    </script>
+</body>
+</html>

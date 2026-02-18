@@ -1,0 +1,138 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>طلب كتابة بحث - الخدمات الجامعية</title>
+    <link rel="stylesheet" href="styles.css">
+</head>
+<body>
+    <header class="header">
+        <nav class="nav">
+            <div class="logo">🎓 الخدمات الجامعية</div>
+            <ul class="nav-links">
+                <li><a href="index.html">الرئيسية</a></li>
+                <li><a href="my-orders.html">طلباتي</a></li>
+                <li><a href="admin-panel.html">لوحة التحكم</a></li>
+            </ul>
+        </nav>
+    </header>
+
+    <main class="container">
+        <div class="form-container fade-in">
+            <h2>📚 طلب كتابة بحث علمي</h2>
+            <p class="text-secondary mb-lg">املأ البيانات التالية وسنبدأ العمل على بحثك فوراً</p>
+
+            <form id="researchForm">
+                <div class="form-group">
+                    <label for="customerName">الاسم الكامل *</label>
+                    <input type="text" id="customerName" name="customerName" required>
+                </div>
+
+                <div class="form-group">
+                    <label for="customerEmail">البريد الإلكتروني *</label>
+                    <input type="email" id="customerEmail" name="customerEmail" required>
+                </div>
+
+                <div class="form-group">
+                    <label for="subject">الموضوع / المادة *</label>
+                    <input type="text" id="subject" name="subject" placeholder="مثال: علم النفس، الفيزياء، التاريخ" required>
+                </div>
+
+                <div class="form-group">
+                    <label for="title">عنوان البحث *</label>
+                    <input type="text" id="title" name="title" placeholder="عنوان البحث المطلوب" required>
+                </div>
+
+                <div class="form-group">
+                    <label for="pages">عدد الصفحات *</label>
+                    <input type="number" id="pages" name="pages" min="1" max="100" placeholder="مثال: 10" required>
+                </div>
+
+                <div class="form-group">
+                    <label for="academicLevel">المستوى الأكاديمي *</label>
+                    <select id="academicLevel" name="academicLevel" required>
+                        <option value="">اختر المستوى</option>
+                        <option value="بكالوريوس">بكالوريوس</option>
+                        <option value="ماجستير">ماجستير</option>
+                        <option value="دكتوراه">دكتوراه</option>
+                        <option value="دبلوم">دبلوم</option>
+                    </select>
+                </div>
+
+                <div class="form-group">
+                    <label for="citationStyle">نوع التوثيق *</label>
+                    <select id="citationStyle" name="citationStyle" required>
+                        <option value="">اختر نوع التوثيق</option>
+                        <option value="APA">APA</option>
+                        <option value="MLA">MLA</option>
+                        <option value="Chicago">Chicago</option>
+                        <option value="Harvard">Harvard</option>
+                        <option value="IEEE">IEEE</option>
+                    </select>
+                </div>
+
+                <div class="form-group">
+                    <label for="deadline">الموعد النهائي *</label>
+                    <input type="date" id="deadline" name="deadline" required>
+                </div>
+
+                <div class="form-group">
+                    <label for="additionalNotes">ملاحظات إضافية</label>
+                    <textarea id="additionalNotes" name="additionalNotes" placeholder="أي متطلبات أو تفاصيل إضافية..."></textarea>
+                </div>
+
+                <div class="form-actions">
+                    <a href="index.html" class="btn btn-secondary">إلغاء</a>
+                    <button type="submit" class="btn btn-primary">إرسال الطلب</button>
+                </div>
+            </form>
+        </div>
+    </main>
+
+    <script src="app.js"></script>
+    <script>
+        document.getElementById('researchForm').addEventListener('submit', async (e) => {
+            e.preventDefault();
+            
+            const formData = {
+                service_type: 'research',
+                customer_name: document.getElementById('customerName').value,
+                customer_email: document.getElementById('customerEmail').value,
+                details: {
+                    subject: document.getElementById('subject').value,
+                    title: document.getElementById('title').value,
+                    pages: document.getElementById('pages').value,
+                    academicLevel: document.getElementById('academicLevel').value,
+                    citationStyle: document.getElementById('citationStyle').value,
+                    deadline: document.getElementById('deadline').value,
+                    additionalNotes: document.getElementById('additionalNotes').value
+                }
+            };
+
+            try {
+                const response = await fetch(API_BASE + '/api/orders', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify(formData)
+                });
+
+                const result = await response.json();
+                
+                if (result.success) {
+                    alert('✅ تم إرسال طلبك بنجاح! سنبدأ العمل عليه فوراً');
+                    window.location.href = 'my-orders.html?email=' + formData.customer_email;
+                } else {
+                    alert('❌ حدث خطأ: ' + result.error);
+                }
+            } catch (error) {
+                console.error('Error:', error);
+                alert('❌ حدث خطأ في الاتصال بالخادم');
+            }
+        });
+
+        // Set minimum date to today
+        document.getElementById('deadline').min = new Date().toISOString().split('T')[0];
+    </script>
+</body>
+</html>

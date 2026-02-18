@@ -1,0 +1,263 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>لوحة التحكم - الخدمات الجامعية</title>
+    <link rel="stylesheet" href="styles.css">
+</head>
+<body>
+    <header class="header">
+        <nav class="nav">
+            <div class="logo">🎓 لوحة تحكم الأدمن</div>
+            <ul class="nav-links">
+                <li><a href="index.html">الرئيسية</a></li>
+                <li><a href="#" onclick="logout()">تسجيل الخروج</a></li>
+            </ul>
+        </nav>
+    </header>
+
+    <main class="container">
+        <!-- Login Form -->
+        <div id="loginSection" class="form-container fade-in" style="max-width: 500px;">
+            <h2 class="text-center">🔐 تسجيل دخول الأدمن</h2>
+            <form id="loginForm">
+                <div class="form-group">
+                    <label for="username">اسم المستخدم</label>
+                    <input type="text" id="username" required>
+                </div>
+                <div class="form-group">
+                    <label for="password">كلمة المرور</label>
+                    <input type="password" id="password" required>
+                </div>
+                <button type="submit" class="btn btn-primary" style="width: 100%;">دخول</button>
+            </form>
+            <p class="text-center text-secondary mt-lg" style="font-size: 0.875rem;">
+                الحساب الافتراضي: admin / admin123
+            </p>
+        </div>
+
+        <!-- Admin Dashboard -->
+        <div id="dashboardSection" style="display: none;">
+            <!-- Statistics -->
+            <div class="fade-in">
+                <h2 class="text-center mb-lg">📊 إحصائيات الطلبات</h2>
+                <div class="stats-grid" id="statsContainer">
+                    <div class="stat-card">
+                        <div class="stat-value" id="totalOrders">0</div>
+                        <div class="stat-label">إجمالي الطلبات</div>
+                    </div>
+                    <div class="stat-card">
+                        <div class="stat-value" id="pendingOrders">0</div>
+                        <div class="stat-label">قيد المراجعة</div>
+                    </div>
+                    <div class="stat-card">
+                        <div class="stat-value" id="inProgressOrders">0</div>
+                        <div class="stat-label">جاري العمل</div>
+                    </div>
+                    <div class="stat-card">
+                        <div class="stat-value" id="completedOrders">0</div>
+                        <div class="stat-label">مكتملة</div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Orders Management -->
+            <div class="mt-lg">
+                <h2 class="text-center mb-lg">📦 إدارة الطلبات</h2>
+                <div id="ordersContainer"></div>
+            </div>
+        </div>
+    </main>
+
+    <script src="app.js"></script>
+    <script>
+        const serviceNames = {
+            'research': '📚 بحث علمي',
+            'presentation': '📊 عرض تقديمي',
+            'programming': '💻 مشروع برمجي',
+            'software': '🖥️ تطوير برمجيات',
+            'custom': '✨ طلب خاص'
+        };
+
+        // Check if already logged in
+        if (localStorage.getItem('adminLoggedIn') === 'true') {
+            showDashboard();
+        }
+
+        // Login form handler
+        document.getElementById('loginForm').addEventListener('submit', async (e) => {
+            e.preventDefault();
+            
+            const username = document.getElementById('username').value;
+            const password = document.getElementById('password').value;
+
+            try {
+                const response = await fetch(API_BASE + '/api/admin/login', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ username, password })
+                });
+
+                const result = await response.json();
+
+                if (result.success) {
+                    localStorage.setItem('adminLoggedIn', 'true');
+                    showDashboard();
+                } else {
+                    alert('❌ ' + result.error);
+                }
+            } catch (error) {
+                console.error('Error:', error);
+                alert('❌ حدث خطأ في تسجيل الدخول');
+            }
+        });
+
+        function logout() {
+            localStorage.removeItem('adminLoggedIn');
+            document.getElementById('loginSection').style.display = 'block';
+            document.getElementById('dashboardSection').style.display = 'none';
+        }
+
+        async function showDashboard() {
+            document.getElementById('loginSection').style.display = 'none';
+            document.getElementById('dashboardSection').style.display = 'block';
+            
+            await loadStats();
+            await loadAllOrders();
+        }
+
+        async function loadStats() {
+            try {
+                const response = await fetch(API_BASE + '/api/admin/stats');
+                const result = await response.json();
+
+                if (result.success) {
+                    const stats = result.stats;
+                    document.getElementById('totalOrders').textContent = stats.total || 0;
+                    document.getElementById('pendingOrders').textContent = stats.pending || 0;
+                    document.getElementById('inProgressOrders').textContent = stats.in_progress || 0;
+                    document.getElementById('completedOrders').textContent = stats.completed || 0;
+                }
+            } catch (error) {
+                console.error('Error loading stats:', error);
+            }
+        }
+
+        async function loadAllOrders() {
+            const container = document.getElementById('ordersContainer');
+            container.innerHTML = '<div class="spinner"></div>';
+
+            try {
+                const response = await fetch(API_BASE + '/api/orders');
+                const result = await response.json();
+
+                if (result.success) {
+                    displayOrders(result.orders);
+                } else {
+                    container.innerHTML = '<p class="text-center text-secondary">❌ فشل في تحميل الطلبات</p>';
+                }
+            } catch (error) {
+                console.error('Error:', error);
+                container.innerHTML = '<p class="text-center text-secondary">❌ حدث خطأ في تحميل الطلبات</p>';
+            }
+        }
+
+        function displayOrders(orders) {
+            const container = document.getElementById('ordersContainer');
+
+            if (orders.length === 0) {
+                container.innerHTML = '<p class="text-center text-secondary">لا توجد طلبات حتى الآن</p>';
+                return;
+            }
+
+            let html = '<div class="orders-grid">';
+            
+            orders.forEach(order => {
+                const serviceName = serviceNames[order.service_type] || order.service_type;
+                const createdDate = new Date(order.created_at).toLocaleDateString('ar-EG');
+                
+                html += `
+                    <div class="order-card fade-in">
+                        <div class="order-header">
+                            <div>
+                                <h3>${serviceName}</h3>
+                                <span class="order-id">رقم الطلب: #${order.id}</span>
+                            </div>
+                            <span class="status-badge status-${order.status}">${getStatusName(order.status)}</span>
+                        </div>
+                        <div class="order-details">
+                            <p><strong>العميل:</strong> ${order.customer_name}</p>
+                            <p><strong>البريد:</strong> ${order.customer_email}</p>
+                            <p><strong>تاريخ الطلب:</strong> ${createdDate}</p>
+                            ${order.delivery_date ? `<p><strong>📅 موعد التسليم:</strong> ${new Date(order.delivery_date).toLocaleDateString('ar-EG')}</p>` : ''}
+                            
+                            <div style="margin-top: 1rem;">
+                                <label style="display: block; margin-bottom: 0.5rem; font-weight: 600;">تحديث الحالة:</label>
+                                <select id="status-${order.id}" class="form-group" style="width: 100%; padding: 0.5rem; margin-bottom: 0.5rem;">
+                                    <option value="pending" ${order.status === 'pending' ? 'selected' : ''}>جديد - قيد المراجعة</option>
+                                    <option value="in_progress" ${order.status === 'in_progress' ? 'selected' : ''}>جاري العمل عليه</option>
+                                    <option value="completed" ${order.status === 'completed' ? 'selected' : ''}>مكتمل</option>
+                                </select>
+                                
+                                <label style="display: block; margin-bottom: 0.5rem; font-weight: 600;">موعد التسليم:</label>
+                                <input type="date" id="delivery-${order.id}" value="${order.delivery_date || ''}" 
+                                       style="width: 100%; padding: 0.5rem; margin-bottom: 0.5rem;">
+                                
+                                <button onclick="updateOrder(${order.id})" class="btn btn-success" style="width: 100%;">
+                                    حفظ التحديثات
+                                </button>
+                            </div>
+                            
+                            <details style="margin-top: 1rem;">
+                                <summary style="cursor: pointer; font-weight: 600; color: var(--primary-light);">عرض التفاصيل الكاملة</summary>
+                                <div style="margin-top: 0.5rem; padding: 0.5rem; background: var(--bg-primary); border-radius: 0.5rem;">
+                                    <pre style="white-space: pre-wrap; font-size: 0.875rem;">${JSON.stringify(order.details, null, 2)}</pre>
+                                </div>
+                            </details>
+                        </div>
+                    </div>
+                `;
+            });
+
+            html += '</div>';
+            container.innerHTML = html;
+        }
+
+        function getStatusName(status) {
+            const names = {
+                'pending': 'جديد - قيد المراجعة',
+                'in_progress': 'جاري العمل عليه',
+                'completed': 'مكتمل'
+            };
+            return names[status] || status;
+        }
+
+        async function updateOrder(orderId) {
+            const status = document.getElementById(`status-${orderId}`).value;
+            const deliveryDate = document.getElementById(`delivery-${orderId}`).value;
+
+            try {
+                const response = await fetch(API_BASE + `/api/orders/${orderId}`, {
+                    method: 'PUT',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ status, delivery_date: deliveryDate || null })
+                });
+
+                const result = await response.json();
+
+                if (result.success) {
+                    alert('✅ تم تحديث الطلب بنجاح');
+                    await loadStats();
+                    await loadAllOrders();
+                } else {
+                    alert('❌ ' + result.error);
+                }
+            } catch (error) {
+                console.error('Error:', error);
+                alert('❌ حدث خطأ في تحديث الطلب');
+            }
+        }
+    </script>
+</body>
+</html>
